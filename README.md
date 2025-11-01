@@ -2,14 +2,14 @@
 **Connectly** is a social networking platform built using microservices architecture. The system manages user connections through a graph database and provides a scalable foundation for social features including connection requests, acceptance/rejection workflows, and event-driven notifications.
 
 ### Architecture Patterns
-**Microservices Pattern
+- **Microservices Pattern
 Each service is an independently deployable Spring Boot application registered with Eureka for dynamic service discovery. Services communicate via:
 
-**Synchronous: REST APIs through the API Gateway
+- **Synchronous: REST APIs through the API Gateway
 Asynchronous: Kafka event streams
 For details, see Service Discovery with Eureka and Event-Driven Communication.
 
-**API Gateway Pattern
+- **API Gateway Pattern
 The ApiGatewayApplication serves as the single entry point at port 8070, implementing:
 
 Route-based request forwarding using Spring Cloud Gateway
