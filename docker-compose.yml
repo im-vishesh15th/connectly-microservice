@@ -1,0 +1,159 @@
+version: "3.8"
+
+services:
+  # 🟢 Kafka (KRaft mode — no Zookeeper)
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: kafka
+    networks:
+      - connectly-network
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      CLUSTER_ID: "LZ9zT1d9T3m7Jr3vWg=="
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  # 🟣 Kafbat UI (Kafka UI Dashboard)
+  kafbat-ui:
+    container_name: kafbat-ui
+    image: ghcr.io/kafbat/kafka-ui:latest
+    ports:
+      - "8090:8080"
+    depends_on:
+      - kafka
+    networks:
+      - connectly-network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+  # 🧩 PostgreSQL Databases (All use same username/password)
+  notification-db:
+    image: postgres
+    container_name: notification-db
+    environment:
+      - POSTGRES_DB=notificationDB
+      - POSTGRES_USER=vishesh
+      - POSTGRES_PASSWORD=vishesh15th
+    networks:
+      - connectly-network
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+
+  posts-db:
+    image: postgres
+    container_name: posts-db
+    environment:
+      - POSTGRES_DB=postsDB
+      - POSTGRES_USER=vishesh
+      - POSTGRES_PASSWORD=vishesh15th
+    networks:
+      - connectly-network
+    volumes:
+      - posts-db-data:/var/lib/postgresql/data
+
+  user-db:
+    image: postgres
+    container_name: user-db
+    environment:
+      - POSTGRES_DB=userDB
+      - POSTGRES_USER=vishesh
+      - POSTGRES_PASSWORD=vishesh15th
+    networks:
+      - connectly-network
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+
+  # 🕸 Neo4j for connections
+  connections-db:
+    image: neo4j
+    container_name: connections-db
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - connections-db-data:/data
+    networks:
+      - connectly-network
+
+  # 🧠 Eureka Discovery Server
+  discovery-server:
+    image: imvishesh15/connectly-app/discovery-server
+    container_name: discovery-server
+    networks:
+      - connectly-network
+    ports:
+      - "8762:8761" # Changed to 8762 to avoid conflict with localhost 8761
+
+  # 🧩 Microservices
+  posts-service:
+    image: imvishesh15/connectly-app/posts-service
+    container_name: posts-service
+    networks:
+      - connectly-network
+    depends_on:
+      - discovery-server
+      - posts-db
+      - kafka
+
+  user-service:
+    image: imvishesh15/connectly-app/user-service
+    container_name: user-service
+    networks:
+      - connectly-network
+    depends_on:
+      - discovery-server
+      - user-db
+      - kafka
+
+  notification-service:
+    image: imvishesh15/connectly-app/notification-service
+    container_name: notification-service
+    networks:
+      - connectly-network
+    depends_on:
+      - discovery-server
+      - notification-db
+      - kafka
+
+  connections-service:
+    image: imvishesh15/connectly-app/connections-service
+    container_name: connections-service
+    networks:
+      - connectly-network
+    depends_on:
+      - discovery-server
+      - connections-db
+      - kafka
+
+  api-gateway:
+    image: imvishesh15/connectly-app/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - connectly-network
+    depends_on:
+      - discovery-server
+
+# 🌐 Shared Network
+networks:
+  connectly-network:
+
+
+# 💾 Volumes
+volumes:
+  kafka_data:
+  notification-db-data:
+  posts-db-data:
+  user-db-data:
+  connections-db-data:

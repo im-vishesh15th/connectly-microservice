@@ -1,0 +1,33 @@
+# Build artifacts
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# Environment variables
+.env
+
+# Log files
+*.log
+
+# Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Docker
+Dockerfile.bak
+
+# Kubernetes secrets (if any)
+*-secret.yml
+
+# Minikube related files
+.minikube/

@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discovery-server
+spec:
+  selector:
+    matchLabels:
+      app: discovery-server
+  template:
+    metadata:
+      labels:
+        app: discovery-server
+    spec:
+      containers:
+      - name: discovery-server
+        image: imvishesh15/connectly-app-discovery-server
+        resources:
+          limits:
+              memory: "500Mi"
+              cpu: "200m"
+          requests:
+            memory: "100Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 8761
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: k8s  
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8761
+          initialDelaySeconds: 300
+          periodSeconds: 20
+          timeoutSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: discovery-server
+spec:
+  type: ClusterIP
+  selector:
+    app: discovery-server
+  ports:
+  - port: 8761
+    targetPort: 8761
